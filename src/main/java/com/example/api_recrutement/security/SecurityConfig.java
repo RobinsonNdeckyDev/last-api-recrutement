@@ -41,6 +41,11 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/auth/register"
                         ).permitAll()
+
+                        // Routes accessibles pour les images
+                        .requestMatchers("/api/files/download/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+
                         // Routes accessibles uniquement par l'admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 

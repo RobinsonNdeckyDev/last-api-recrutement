@@ -34,16 +34,6 @@ package com.example.api_recrutement.controllers;
                 return ResponseEntity.ok(response);
             }
 
-//            @PostMapping("/register")
-//            public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
-//                try {
-//                    authService.register(registerRequest);
-//                    return ResponseEntity.ok("User registered successfully");
-//                } catch (Exception e) {
-//                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//                }
-//            }
-
             @PostMapping("/register")
             public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
                 try {

@@ -7,6 +7,8 @@ import com.example.api_recrutement.models.TypeDocument;
 import com.example.api_recrutement.repository.CandidatureRepository;
 import com.example.api_recrutement.services.DocumentService;
 import com.example.api_recrutement.dtos.DocumentDTO;
+import com.example.api_recrutement.services.TypeDocumentService;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +23,16 @@ import java.util.Optional;
 public class DocumentController {
     private final CandidatureRepository candidatureRepository;
     private final DocumentService documentService;
+    private final TypeDocumentService typeDocumentService;
 
-    public DocumentController(DocumentService documentService, CandidatureRepository candidatureRepository) {
+    public DocumentController(
+            DocumentService documentService,
+            CandidatureRepository candidatureRepository,
+            TypeDocumentService typeDocumentService
+    ) {
         this.documentService = documentService;
         this.candidatureRepository = candidatureRepository;
+        this.typeDocumentService = typeDocumentService;
     }
 
     public Optional<Candidature> getCandidatureById(Long id) {
@@ -32,118 +40,43 @@ public class DocumentController {
     }
 
     @GetMapping
-    public List<Document> getAllDocuments() {
-        return documentService.getAllDocuments();
+    public ResponseEntity<List<Document>> getAllDocuments() {
+        return ResponseEntity.ok(documentService.getAllDocuments());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Document> getDocumentById(@PathVariable Long id) {
-        return documentService.getDocumentById(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id) {
+        Document document = documentService.getDocumentById(id)
+                .orElseThrow(() -> new RuntimeException("Document non trouvé"));
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + document.getTitre() + "\"")
+                .body(document.getData());
     }
 
     @PostMapping
-    public ResponseEntity<Document> createDocument(
+    public ResponseEntity<?> uploadDocument(
             @RequestParam("file") MultipartFile file,
             @RequestParam("titre") String titre,
             @RequestParam("description") String description,
             @RequestParam("typeDocumentId") Long typeDocumentId,
-            @RequestParam("candidatId") Long candidatId
-           ) {
-
+            @RequestParam("userId") Long userId) {
         try {
-            // Récupérez ou créez les objets nécessaires
-            TypeDocument typeDocument = documentService.getDocumentById(typeDocumentId)
-                    .orElseThrow(() -> new RuntimeException("TypeDocument not found")).getTypeDocument();
+            TypeDocument typeDocument = typeDocumentService.getTypeDocumentById(typeDocumentId)
+                    .orElseThrow(() -> new RuntimeException("Type de document non trouvé"));
 
-            Document document = documentService.createDocument(file, titre, description, typeDocument, candidatId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(document);
+            Document document = documentService.createDocument(file, titre, description, typeDocumentId, userId);
+            return ResponseEntity.ok(document);
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erreur lors de l'upload du document: " + e.getMessage());
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Document> updateDocument(@PathVariable Long id, @RequestBody DocumentDTO documentDTO) {
-        Document document = DocumentMapper.INSTANCE.toDocument(documentDTO);
-        Document updatedDocument = documentService.updateDocument(id, document);
-        return ResponseEntity.ok(updatedDocument);
-    }
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
+    public ResponseEntity<?> deleteDocument(@PathVariable Long id) {
         documentService.deleteDocument(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
+
 }
-
-
-
-
-
-
-
-
-
-//package com.example.api_recrutement.controllers;
-//
-//import org.springframework.web.bind.annotation.*;
-//import com.example.api_recrutement.models.Document;
-//import com.example.api_recrutement.services.DocumentService;
-//import org.springframework.http.HttpStatus;
-//import org.springframework.http.ResponseEntity;
-//import com.example.api_recrutement.dtos.DocumentDTO;
-//import com.example.api_recrutement.mappers.DocumentMapper;
-//
-//import java.util.List;
-//
-//// Contrôleur pour la gestion des candidats
-//@RestController
-//@RequestMapping("/documents")
-//public class DocumentController {
-//    public final DocumentService documentService;
-//
-//    public DocumentController(DocumentService documentService) {
-//        this.documentService = documentService;
-//    }
-//
-//    // Récupère tous les documents
-//    @GetMapping
-//    public List<Document> getAllDocuments() {
-//        return documentService.getAllDocuments();
-//    }
-//
-//    // Récupère un document par son ID
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Document> getDocumentById(@PathVariable Long id) {
-//        return documentService.getDocumentById(id)
-//                .map(ResponseEntity::ok)
-//                .orElseGet(() -> ResponseEntity.notFound().build());
-//    }
-//
-//    // Crée un nouveau document
-//    @PostMapping
-//    public ResponseEntity<Document> createDocument(@RequestBody DocumentDTO documentDTO) {
-//        // Convertit DocumentDTO en Document
-//        Document document = DocumentMapper.INSTANCE.toDocument(documentDTO);
-//        Document createDocument = documentService.createDocument(document);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(createDocument);
-//    }
-//
-//    // Met à jour un document
-//    @PutMapping("/{id}")
-//    public ResponseEntity<Document> updateDocument(@PathVariable Long id, @RequestBody DocumentDTO documentDTO) {
-//        // Convertit documentDTO en document
-//        Document document = DocumentMapper.INSTANCE.toDocument(documentDTO);
-//        Document updateDocument = documentService.updateDocument(id, document);
-//        return ResponseEntity.ok(updateDocument);
-//    }
-//
-//    // Supprime un document par son ID
-//    @DeleteMapping("/{id}")
-//    public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
-//        documentService.deleteDocument(id);
-//        return ResponseEntity.noContent().build();
-//    }
-//}

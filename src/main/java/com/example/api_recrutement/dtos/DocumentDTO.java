@@ -7,5 +7,5 @@ public class DocumentDTO {
     private String titre;
     private String description;
     private Long typeDocumentId;
-    private Long candidatId;
+    private Long userId;
 }

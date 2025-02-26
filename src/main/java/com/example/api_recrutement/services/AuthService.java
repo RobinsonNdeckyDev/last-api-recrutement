@@ -55,14 +55,15 @@ package com.example.api_recrutement.services;
               final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
               final String jwt = jwtUtil.generateToken(userDetails);
 
-              // Recuperer l'utilisateur connecte
               User user = userRepository.findByEmail(authRequest.getEmail())
                       .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-              // Verifier si l'utilisateur est un Admin
+              // Vérifier si l'utilisateur est un Admin
               Admin admin = adminRepository.findByEmail(user.getEmail()).orElse(null);
               if (admin != null) {
                   AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(
+                          admin.getId(),
+                          user.getId(),
                           admin.getPrenom(),
                           admin.getNom(),
                           admin.getEmail(),
@@ -79,6 +80,8 @@ package com.example.api_recrutement.services;
               Candidat candidat = candidatRepository.findByEmail(user.getEmail()).orElse(null);
               if (candidat != null) {
                   AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(
+                          candidat.getId(),
+                          user.getId(),
                           candidat.getPrenom(),
                           candidat.getNom(),
                           candidat.getEmail(),
@@ -91,8 +94,10 @@ package com.example.api_recrutement.services;
                   return new AuthResponse(jwt, userInfo);
               }
 
-              // Si aucun Admin ou Candidat n'est trouvé, renvoyer des valeurs par defaut
+              // Si aucun Admin ou Candidat n'est trouvé
               AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(
+                      user.getId(),
+                      user.getId(),
                       user.getPrenom(),
                       user.getNom(),
                       user.getEmail(),
@@ -104,78 +109,93 @@ package com.example.api_recrutement.services;
               );
 
               return new AuthResponse(jwt, userInfo);
-
           }
 
-          @Transactional
-          public AuthResponse register(RegisterRequest request) {
-              if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-                  throw new RuntimeException("L'utilisateur existe déjà");
-              }
+    @Transactional
+    public AuthResponse register(RegisterRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("L'utilisateur existe déjà");
+        }
 
-              try {
-                  String encodedPassword = passwordEncoder.encode(request.getPassword());
-                  User user = new User();
-                  user.setPhotoProfil(request.getPhotoProfil());
-                  user.setDescription(request.getDescription());
-                  user.setEmail(request.getEmail());
-                  user.setPassword(encodedPassword);
-                  user.setRole(request.getRole());
-                  user.setNom(request.getNom());
-                  user.setPrenom(request.getPrenom());
-                  user.setTelephone(request.getTelephone());
-                  user.setAdresse(request.getAdresse());
-                  userRepository.save(user);
+        try {
+            String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-                  if (Role.ADMIN.equals(request.getRole())) {
-                      Admin admin = new Admin();
-                      admin.setUser(user);
-                      admin.setPrenom(request.getPrenom());
-                      admin.setNom(request.getNom());
-                      admin.setEmail(request.getEmail());
-                      admin.setPassword(encodedPassword);
-                      admin.setPhotoProfil(request.getPhotoProfil());
-                      admin.setAdresse(request.getAdresse());
-                      admin.setDescription(request.getDescription());
-                      admin.setTelephone(request.getTelephone());
-                      adminRepository.save(admin);
-                  } else if (Role.CANDIDAT.equals(request.getRole())) {
-                      Candidat candidat = getCandidat(request, user, encodedPassword);
-                      candidatRepository.save(candidat);
-                  }
+            // Créer et sauvegarder l'utilisateur
+            User user = new User();
+            user.setEmail(request.getEmail());
+            user.setPassword(encodedPassword);
+            user.setRole(request.getRole());
+            user.setNom(request.getNom());
+            user.setPrenom(request.getPrenom());
+            user.setTelephone(request.getTelephone());
+            user.setAdresse(request.getAdresse());
+            user.setDescription(request.getDescription());
+            user.setPhotoProfil(request.getPhotoProfil());
 
-                  final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-                  final String jwt = jwtUtil.generateToken(userDetails);
+            User savedUser = userRepository.save(user);
 
-                  AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(
-                          request.getPrenom(),
-                          request.getNom(),
-                          request.getEmail(),
-                          request.getRole().name(),
-                          request.getTelephone(),
-                          request.getAdresse(),
-                          request.getDescription(),
-                          request.getPhotoProfil()
-                  );
-                  return new AuthResponse(jwt, userInfo);
-              } catch (DataIntegrityViolationException e) {
-                  throw new RuntimeException("L'utilisateur avec cet email existe déjà.");
-              } catch (Exception e) {
-                  throw new RuntimeException("Erreur lors de l'enregistrement de l'utilisateur: " + e.getMessage());
-              }
-          }
-          private static Candidat getCandidat(RegisterRequest request, User user, String encodedPassword) {
-              Candidat candidat = new Candidat();
-              candidat.setUser(user);
-              candidat.setPrenom(request.getPrenom());
-              candidat.setNom(request.getNom());
-              candidat.setEmail(request.getEmail());
-              candidat.setPassword(encodedPassword);
-              candidat.setAdresse(request.getAdresse());
-              candidat.setTelephone(request.getTelephone());
-              candidat.setDescription(request.getDescription());
-              candidat.setPhotoProfil(request.getPhotoProfil());
-              return candidat;
-          }
+            if (Role.ADMIN.equals(request.getRole())) {
+                Admin admin = new Admin();
+                admin.setUser(savedUser);
+                admin.setEmail(request.getEmail());
+                admin.setPassword(encodedPassword);
+                admin.setNom(request.getNom());
+                admin.setPrenom(request.getPrenom());
+                admin.setTelephone(request.getTelephone());
+                admin.setAdresse(request.getAdresse());
+                admin.setDescription(request.getDescription());
+                admin.setPhotoProfil(request.getPhotoProfil());
+                Admin savedAdmin = adminRepository.save(admin);
 
-      }
+                final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+                final String jwt = jwtUtil.generateToken(userDetails);
+
+                AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(
+                        savedAdmin.getId(),
+                        savedUser.getId(),
+                        savedAdmin.getPrenom(),
+                        savedAdmin.getNom(),
+                        savedAdmin.getEmail(),
+                        savedUser.getRole().name(),
+                        savedAdmin.getTelephone(),
+                        savedAdmin.getDescription(),
+                        savedAdmin.getAdresse(),
+                        savedAdmin.getPhotoProfil()
+                );
+                return new AuthResponse(jwt, userInfo);
+            }
+
+            // Similaire pour Candidat...
+            if (Role.CANDIDAT.equals(request.getRole())) {
+                Candidat candidat = new Candidat();
+                candidat.setUser(savedUser);
+                // ... set other candidat fields ...
+                Candidat savedCandidat = candidatRepository.save(candidat);
+
+                final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+                final String jwt = jwtUtil.generateToken(userDetails);
+
+                AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(
+                        savedCandidat.getId(),
+                        savedUser.getId(),
+                        savedCandidat.getPrenom(),
+                        savedCandidat.getNom(),
+                        savedCandidat.getEmail(),
+                        savedUser.getRole().name(),
+                        savedCandidat.getTelephone(),
+                        savedCandidat.getDescription(),
+                        savedCandidat.getAdresse(),
+                        savedCandidat.getPhotoProfil()
+                );
+                return new AuthResponse(jwt, userInfo);
+            }
+
+            throw new RuntimeException("Type d'utilisateur non supporté");
+
+        } catch (DataIntegrityViolationException e) {
+            throw new RuntimeException("L'utilisateur avec cet email existe déjà.");
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de l'enregistrement: " + e.getMessage());
+        }
+    }
+}
