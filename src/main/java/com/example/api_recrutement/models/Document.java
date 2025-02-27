@@ -20,12 +20,13 @@ public class Document {
     private String description; // Description du document
 
     @Lob
-    @Column(nullable = false)
-    private byte[] data; // Utilisation de BLOB pour stocker les données binaires
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] data;
+    // Utilisation de BLOB pour stocker les données binaires
 
     @ManyToOne
-    @JoinColumn(name = "candidat_id", nullable = false)
-    private Candidat candidat;
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "typeDocument_id", nullable = false)

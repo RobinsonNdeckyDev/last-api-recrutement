@@ -28,7 +28,7 @@ public class TypeDocument extends Auditable {
     private EtatEntiteGlobal etat;
 
     @ManyToOne
-    @JoinColumn(name = "id_format_document", nullable = false)
+    @JoinColumn(name = "formatDocumentId", nullable = false)
     private FormatDocument formatDocument;
 
     public boolean getEstObligatoire() {
