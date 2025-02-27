@@ -11,7 +11,7 @@ import com.example.api_recrutement.mappers.AnneeAcademiqueMapper;
 
 import java.util.List;
 
-// Contrôleur pour la gestion des candidats
+// Contrôleur pour la gestion des annees academiques
 @RestController
 @RequestMapping("/api/annees-academiques")
 public class AnneeAcademiqueController {
@@ -21,8 +21,7 @@ public class AnneeAcademiqueController {
         this.anneeAcademiqueService = anneeAcademiqueService;
     }
 
-    // Seuls les utilisateurs ayant le role 'ADMIN' peuvent créer une année académique
-    @PreAuthorize("hasAnyRole('ADMIN', 'CANDIDAT')")
+
     // Récupère toutes les annees academiques
     @GetMapping
     public List<AnneeAcademique> getAllAnneesAcademiques() {

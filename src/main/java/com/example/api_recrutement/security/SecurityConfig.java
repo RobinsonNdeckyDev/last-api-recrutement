@@ -45,17 +45,20 @@ public class SecurityConfig {
                         // Routes accessibles pour les images
                         .requestMatchers("/api/files/download/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/annonces/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/annees-academiques/**").permitAll()
+
 
                         // Routes accessibles uniquement par l'admin
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // Routes accessibles par les deux roles
-                        .requestMatchers("/api/common/**").hasAnyRole("ADMIN", "CANDIDAT")
+                        //.requestMatchers("/api/common/**").hasAnyRole("ADMIN", "CANDIDAT")
 
                         // Routes avec des permissions spécifiques (lecture, modification, suppression)
 
                         // Lecture
-                        .requestMatchers(HttpMethod.GET, "/api/resources/**").hasAnyRole("ADMIN", "CANDIDAT")
+                        .requestMatchers(HttpMethod.GET, "/api/resources/**").permitAll()
 
                         // Création
                         .requestMatchers(HttpMethod.POST, "/api/resources/**").hasRole("ADMIN")
