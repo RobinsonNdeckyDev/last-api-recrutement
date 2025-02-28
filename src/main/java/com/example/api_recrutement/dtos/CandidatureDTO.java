@@ -9,6 +9,6 @@ import java.util.List;
 public class CandidatureDTO {
     private EtatCandidature etat;
     private Long annonceId;
-    private Long candidatId;
-    private List<Long> documentIds; // Utilisez une liste d'identifiants pour les documents
+    private Long userId;
+    private List<Long> documentIds; // Liste d'identifiants pour les documents
 }

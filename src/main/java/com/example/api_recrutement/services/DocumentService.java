@@ -67,13 +67,18 @@ public class DocumentService {
     }
 
     public Document updateDocument(Long id, Document documentDetails) {
-        return documentRepository.findById(id).map(document -> {
-            document.setTitre(documentDetails.getTitre());
-            document.setDescription(documentDetails.getDescription());
-            document.setTypeDocument(documentDetails.getTypeDocument());
-            document.setUser(documentDetails.getUser());
-            return documentRepository.save(document);
-        }).orElseThrow(() -> new RuntimeException("Document non existant"));
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Document non trouvé avec l'id: " + id));
+
+        document.setTitre(documentDetails.getTitre());
+        document.setDescription(documentDetails.getDescription());
+        document.setTypeDocument(documentDetails.getTypeDocument());
+        document.setUser(documentDetails.getUser());
+        if (documentDetails.getData() != null) {
+            document.setData(documentDetails.getData());
+        }
+
+        return documentRepository.save(document);
     }
 
     public void deleteDocument(Long id) {
