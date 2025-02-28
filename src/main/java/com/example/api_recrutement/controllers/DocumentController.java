@@ -1,16 +1,16 @@
 package com.example.api_recrutement.controllers;
 
-import com.example.api_recrutement.mappers.DocumentMapper;
-import com.example.api_recrutement.models.Candidature;
 import com.example.api_recrutement.models.Document;
+import com.example.api_recrutement.models.User;
 import com.example.api_recrutement.models.TypeDocument;
-import com.example.api_recrutement.repository.CandidatureRepository;
-import com.example.api_recrutement.services.DocumentService;
 import com.example.api_recrutement.dtos.DocumentDTO;
+import com.example.api_recrutement.services.DocumentService;
 import com.example.api_recrutement.services.TypeDocumentService;
+import com.example.api_recrutement.services.UserService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,22 +21,18 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/documents")
 public class DocumentController {
-    private final CandidatureRepository candidatureRepository;
+    private final UserService userService;
     private final DocumentService documentService;
     private final TypeDocumentService typeDocumentService;
 
     public DocumentController(
             DocumentService documentService,
-            CandidatureRepository candidatureRepository,
+            UserService userService,
             TypeDocumentService typeDocumentService
     ) {
         this.documentService = documentService;
-        this.candidatureRepository = candidatureRepository;
         this.typeDocumentService = typeDocumentService;
-    }
-
-    public Optional<Candidature> getCandidatureById(Long id) {
-        return candidatureRepository.findById(id);
+        this.userService = userService;
     }
 
     @GetMapping
@@ -70,6 +66,42 @@ public class DocumentController {
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erreur lors de l'upload du document: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('CANDIDAT') or hasRole('ADMIN')")
+    public ResponseEntity<Document> updateDocument(
+            @PathVariable Long id,
+            @ModelAttribute DocumentDTO documentDTO,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        try {
+            // Récupérer les entités en gérant les Optional
+            Document existingDocument = documentService.getDocumentById(id)
+                    .orElseThrow(() -> new RuntimeException("Document non trouvé"));
+
+            TypeDocument typeDocument = typeDocumentService.getTypeDocumentById(documentDTO.getTypeDocumentId())
+                    .orElseThrow(() -> new RuntimeException("Type de document non trouvé"));
+
+            User user = userService.getUserById(documentDTO.getUserId())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+            // Mettre à jour le document
+            existingDocument.setTitre(documentDTO.getTitre());
+            existingDocument.setDescription(documentDTO.getDescription());
+            existingDocument.setTypeDocument(typeDocument);
+            existingDocument.setUser(user);
+
+            if (file != null && !file.isEmpty()) {
+                existingDocument.setData(file.getBytes());
+            }
+
+            Document updatedDocument = documentService.updateDocument(id, existingDocument);
+            return ResponseEntity.ok(updatedDocument);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
         }
     }
 

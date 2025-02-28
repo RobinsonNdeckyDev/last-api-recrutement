@@ -1,9 +1,7 @@
 package com.example.api_recrutement.services;
 
 import com.example.api_recrutement.models.*;
-import com.example.api_recrutement.repository.CandidatRepository;
-import com.example.api_recrutement.repository.CandidatureRepository;
-import com.example.api_recrutement.repository.DocumentRepository;
+import com.example.api_recrutement.repository.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,12 +11,19 @@ import java.util.Optional;
 public class CandidatureService {
     private final DocumentRepository documentRepository;
     private final CandidatureRepository candidatureRepository;
-    private final CandidatRepository candidatRepository;
+    private final UserRepository userRepository;
+    private final AnnonceRepository annonceRepository;
 
-    public CandidatureService(DocumentRepository documentRepository, CandidatureRepository candidatureRepository, CandidatRepository candidatRepository) {
+    public CandidatureService(
+            DocumentRepository documentRepository,
+            CandidatureRepository candidatureRepository,
+            UserRepository userRepository,
+            AnnonceRepository annonceRepository
+    ) {
         this.documentRepository = documentRepository;
         this.candidatureRepository = candidatureRepository;
-        this.candidatRepository = candidatRepository;
+        this.userRepository = userRepository;
+        this.annonceRepository = annonceRepository;
     }
 
     public List<Candidature> getAllCandidatures() {
@@ -29,18 +34,26 @@ public class CandidatureService {
         return candidatureRepository.findById(id);
     }
 
-    public Candidature createCandidature(Long candidatId, Long annonceId, List<Long> documentIds) {
-        Candidat candidat = candidatRepository.findById(candidatId)
-                .orElseThrow(() -> new RuntimeException("Candidat non trouvé"));
+    public Candidature createCandidature(Long userId, Long annonceId, List<Long> documentIds) {
+        // On recupere le user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User non trouvé"));
 
-        Annonce annonce = new Annonce(); // Récupérez ou créez l'annonce ici
+        // on recupere l'annonce
+        Annonce annonce = annonceRepository.findById(annonceId)
+                .orElseThrow(() -> new RuntimeException("Annonce non trouvée"));
 
+        // on recupere les documents
         List<Document> documents = documentRepository.findAllById(documentIds);
+        if (documents.size() != documentIds.size()) {
+            throw new RuntimeException("certains documents sont introuvables");
+        }
 
         Candidature candidature = new Candidature();
-        candidature.setCandidat(candidat);
+        candidature.setUser(user);
         candidature.setAnnonce(annonce);
-        candidature.setDocuments(documents);
+        candidature.setDocumentIds(documents);
+        candidature.setEtat(EtatCandidature.PENDING);
 
         return candidatureRepository.save(candidature);
     }
@@ -52,10 +65,10 @@ public class CandidatureService {
         }
 
         Candidature existingCandidature = candidatureOptional.get();
-        existingCandidature.setCandidat(candidature.getCandidat());
+        existingCandidature.setUser(candidature.getUser());
         existingCandidature.setAnnonce(candidature.getAnnonce());
         existingCandidature.setEtat(candidature.getEtat());
-        existingCandidature.setDocuments(candidature.getDocuments());
+        existingCandidature.setDocumentIds(candidature.getDocumentIds());
 
         return candidatureRepository.save(existingCandidature);
     }

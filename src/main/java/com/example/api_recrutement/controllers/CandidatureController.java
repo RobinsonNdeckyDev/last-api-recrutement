@@ -40,7 +40,7 @@ public class CandidatureController {
             @RequestBody CandidatureDTO candidatureDTO) {
 
         Candidature candidature = candidatureService.createCandidature(
-                candidatureDTO.getCandidatId(),
+                candidatureDTO.getUserId(),
                 candidatureDTO.getAnnonceId(),
                 candidatureDTO.getDocumentIds()
         );

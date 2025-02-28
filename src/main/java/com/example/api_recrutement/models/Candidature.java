@@ -18,12 +18,12 @@ public class Candidature extends Auditable {
     @Enumerated(EnumType.STRING)
     private EtatCandidature etat;
 
-    @OneToOne
-    @JoinColumn(name = "id_candidat", nullable = false)
-    private Candidat candidat;
+    @ManyToOne
+    @JoinColumn(name = "userId", nullable = false)
+    private User user;
 
-    @OneToOne
-    @JoinColumn(name = "id_annonce", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "annonceId", nullable = false)
     private Annonce annonce;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -32,6 +32,6 @@ public class Candidature extends Auditable {
             joinColumns = @JoinColumn(name = "candidature_id"),
             inverseJoinColumns = @JoinColumn(name = "document_id")
     )
-    private List<Document> documents;
+    private List<Document> documentIds;
 
 }

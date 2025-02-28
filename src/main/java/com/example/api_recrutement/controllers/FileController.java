@@ -67,22 +67,6 @@ public class FileController {
         }
     }
 
-//    @GetMapping("/{id}")
-//    public ResponseEntity<Resource> getFile(@PathVariable Long id) {
-//        try {
-//            FileDB fileDB = fileStorageService.getFile(id);
-//            Path path = Paths.get(fileDB.getChemin());
-//            org.springframework.core.io.Resource resource = new UrlResource(path.toUri());
-//
-//            return ResponseEntity.ok()
-//                    .contentType(MediaType.parseMediaType(fileDB.getType()))
-//                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileDB.getNom() + "\"")
-//                    .body(resource);
-//        } catch (Exception e) {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteFile(@PathVariable Long id) {
         try {

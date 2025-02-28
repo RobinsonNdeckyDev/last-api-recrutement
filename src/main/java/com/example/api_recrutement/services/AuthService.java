@@ -169,7 +169,14 @@ package com.example.api_recrutement.services;
             if (Role.CANDIDAT.equals(request.getRole())) {
                 Candidat candidat = new Candidat();
                 candidat.setUser(savedUser);
-                // ... set other candidat fields ...
+                candidat.setEmail(request.getEmail());
+                candidat.setPassword(encodedPassword);
+                candidat.setNom(request.getNom());
+                candidat.setPrenom(request.getPrenom());
+                candidat.setTelephone(request.getTelephone());
+                candidat.setAdresse(request.getAdresse());
+                candidat.setDescription(request.getDescription());
+                candidat.setPhotoProfil(request.getPhotoProfil());
                 Candidat savedCandidat = candidatRepository.save(candidat);
 
                 final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
@@ -189,6 +196,29 @@ package com.example.api_recrutement.services;
                 );
                 return new AuthResponse(jwt, userInfo);
             }
+
+//            if (Role.CANDIDAT.equals(request.getRole())) {
+//                Candidat candidat = new Candidat();
+//                candidat.setUser(savedUser);
+//                Candidat savedCandidat = candidatRepository.save(candidat);
+//
+//                final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+//                final String jwt = jwtUtil.generateToken(userDetails);
+//
+//                AuthResponse.UserInfo userInfo = new AuthResponse.UserInfo(
+//                        savedCandidat.getId(),
+//                        savedUser.getId(),
+//                        savedCandidat.getPrenom(),
+//                        savedCandidat.getNom(),
+//                        savedCandidat.getEmail(),
+//                        savedUser.getRole().name(),
+//                        savedCandidat.getTelephone(),
+//                        savedCandidat.getDescription(),
+//                        savedCandidat.getAdresse(),
+//                        savedCandidat.getPhotoProfil()
+//                );
+//                return new AuthResponse(jwt, userInfo);
+//            }
 
             throw new RuntimeException("Type d'utilisateur non supporté");
 
